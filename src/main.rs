@@ -557,7 +557,7 @@ add rsp, {offset}
     {e1_instrs}
     mov rbx, [rsp+{offset}]
     sub rax, 1
-    mul rbx, 8
+    imul rbx, 8
     add rax, rbx
             ")
         },
