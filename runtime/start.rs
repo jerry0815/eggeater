@@ -32,10 +32,25 @@ fn snek_str(val: i64, seen : &mut Vec<i64>) -> String {
         seen.push(val);
         let addr = (val - 1) as *const i64;
         let fst = unsafe { *addr };
-        let snd = unsafe { *addr.offset(1) };
-        let result = format!("({}, {})", snek_str(fst, seen), snek_str(snd, seen));
-        seen.pop();
-        return result;
+        let size = snek_str(fst, seen).parse();
+        match size {
+            Ok(n) => {
+                let mut result = String::from("[");
+                for i in 0..n {
+                    let addr = (val - 1 + i + 1) as *const i64;
+                    let fst = unsafe { *addr };
+                    result.push_str(&snek_str(fst, seen));
+                    if i < n - 1 { result.push_str(", ") }
+                }
+                result.push_str("]");
+                seen.pop();
+                return result;
+            },
+            Err(_) => {
+                seen.pop();
+                return "Invalid".to_string();
+            }
+        }
     }
     else {
         println!("Unknown value: {}", val);

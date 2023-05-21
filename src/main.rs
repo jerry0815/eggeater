@@ -326,17 +326,18 @@ fn depth(e: &Expr) -> i32 {
 }
 
 fn check_arr(e: &Expr, ctx: &mut CompilationContext) -> i32 {
-    let mut arr_len = 0;
     match e {
         Expr:: Id(s) => {
             if !ctx.arr_env.contains_key(s) {
                 panic!("Invalid array not found {}", s);
             }
-            arr_len = *ctx.arr_env.get(s).unwrap() * 2;
+            else {
+                let arr_len = ctx.arr_env.get(s).unwrap() * 2;
+                arr_len
+            }
         }
         _ => panic!("Invalid array not found "),
     }
-    arr_len
 }
 
 // fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &String, l: &mut i32, fun_env: &mut HashMap<String, i32>, is_def: bool) -> String  {
@@ -600,7 +601,7 @@ add rsp, {offset}
     {e2_instrs}
     mov rbx, [rsp+{offset}]
     imul rbx, 4
-    sub rbx, 1
+    add rbx, 7
     mov rax, [rax+rbx]
             ")
         },
