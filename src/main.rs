@@ -50,6 +50,16 @@ enum Expr {
     Tuple(Vec<Expr>),
 }
 
+
+struct CompilationContext<'a> {
+    brake: &'a String,
+    l: &'a mut i32,
+    fun_env: &'a mut HashMap<String, i32>,
+    is_def: bool,
+    arr_env: &'a mut HashMap<String, i32>,
+}
+
+
 fn parse_bind(s: &Sexp) -> (String, Expr) {
     let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool", "print", "input", "fun"];
     match s {
@@ -316,7 +326,8 @@ fn depth(e: &Expr) -> i32 {
 }
 
 
-fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &String, l: &mut i32, fun_env: &mut HashMap<String, i32>, is_def: bool) -> String  {
+// fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &String, l: &mut i32, fun_env: &mut HashMap<String, i32>, is_def: bool) -> String  {
+fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, ctx: &mut CompilationContext) -> String {
     match e {   
         Expr::Number(n) => {
             let base:i64 = 2;
@@ -329,7 +340,7 @@ fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &Stri
         }
         Expr::Id(s) if s == "input" => 
         {
-          if is_def {
+          if ctx.is_def {
             panic!("Invalid input in def");
           }
           format!("  mov rax, rdi")
@@ -343,7 +354,7 @@ fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &Stri
             format!("mov rax, [rsp + {offset}]")
         }
         Expr::UnOp(Op1::Add1,subexpr) => {
-            let e1_instrs = compile_to_instrs(subexpr, si, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(subexpr, si, env, ctx);
             format!("
   {e1_instrs}
   test rax, 1
@@ -354,7 +365,7 @@ fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &Stri
   jo throw_error")
         }
         Expr::UnOp(Op1::Sub1,subexpr) => {
-            let e1_instrs = compile_to_instrs(subexpr, si, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(subexpr,si, env, ctx);
             format!("
   {e1_instrs}
   test rax, 1
@@ -365,13 +376,13 @@ fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &Stri
   jo throw_error")
         }
         Expr::UnOp(Op1::IsNum,subexpr) => {
-            compile_to_instrs(subexpr, si, env, brake, l, fun_env, false) + "\n  and rax, 1\n  cmp rax, 0\n  mov rbx, 3\n  mov rax, 1\n  cmove rax,rbx"
+            compile_to_instrs(subexpr, si, env, ctx) + "\n  and rax, 1\n  cmp rax, 0\n  mov rbx, 3\n  mov rax, 1\n  cmove rax,rbx"
         }
         Expr::UnOp(Op1::IsBool,subexpr) => {
-            compile_to_instrs(subexpr, si, env, brake, l, fun_env, false) + "\n  or rax, 0\n  cmp rax, 1\n  mov rbx, 3\n  mov rax, 1\n  cmove rax,rbx"
+            compile_to_instrs(subexpr, si, env, ctx) + "\n  or rax, 0\n  cmp rax, 1\n  mov rbx, 3\n  mov rax, 1\n  cmove rax,rbx"
         }
         Expr::UnOp(Op1::Print,subexpr) => {
-          let e_is = compile_to_instrs(subexpr, si, env, brake, l, fun_env, false);
+          let e_is = compile_to_instrs(subexpr, si, env, ctx);
           let index = if si % 2 == 1 { si + 2 } else { si + 1 };
           let offset = index * 8;
           format!("
@@ -388,14 +399,14 @@ add rsp, {offset}
           let offset = env.get(name).expect(&format!("Unbound variable identifier {name}")) * 8;
 
           let save = format!("mov [rsp + {offset}], rax");
-          let val_is = compile_to_instrs(val, si, env, brake, l, fun_env, false);
+          let val_is = compile_to_instrs(val, si, env, ctx);
           format!("
 {val_is}
 {save}")
       }
         Expr::BinOp(Op2::Arith(op), e1, e2) => {
-            let e1_instrs = compile_to_instrs(e1, si+1, env, brake, l, fun_env, false);
-            let e2_instrs = compile_to_instrs(e2, si, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(e1, si+1, env, ctx);
+            let e2_instrs = compile_to_instrs(e2, si, env, ctx);
             let stack_offset = si * 8;
             let arith_instr = match op {
                 ArithType::Plus => format!("add rax, [rsp + {stack_offset}]"),
@@ -431,7 +442,8 @@ add rsp, {offset}
                 }
                 else {
                     set.insert(name);
-                    let val_is = compile_to_instrs(val, si+count, &sub_env, brake, l, fun_env, false);
+                    
+                    let val_is = compile_to_instrs(val, si+count, &sub_env, ctx);
                     instrs = instrs + "\n" + &val_is;
                     // check if hashmap contains name, if so, panic "Duplicate binding" error:
                     let stack_offset = (si + count) * 8;
@@ -440,23 +452,30 @@ add rsp, {offset}
                     count += 1;
                 }
             }
-            instrs + "\n" + &compile_to_instrs(body, si + count, &sub_env, brake, l, fun_env, false)
+            instrs + "\n" + &compile_to_instrs(body, si+count, &sub_env, ctx)
         }
         Expr::False => format!("mov rax, {}", 3),
         Expr::True => format!("mov rax, {}", 7),
         Expr::Break(e) => {
-            if brake == "" {
+            if ctx.brake == "" {
                 panic!("break");
             }
-            let e_is = compile_to_instrs(e, si, env, brake, l, fun_env, false);
+            let e_is = compile_to_instrs(e, si, env, ctx);
             format!("
   {e_is}
-  jmp {brake}")
+  jmp {}",ctx.brake)
         }
         Expr::Loop(e) => {
-            let startloop = new_label(l, "loop");
-            let endloop = new_label(l, "loopend");
-            let e_is = compile_to_instrs(e, si, env, &endloop, l, fun_env, false);
+            let startloop = new_label(ctx.l, "loop");
+            let endloop = new_label(ctx.l, "loopend");
+            let mut new_ctx = CompilationContext {
+                brake: &endloop,
+                l: ctx.l,
+                fun_env: ctx.fun_env,
+                is_def: ctx.is_def,
+                arr_env: ctx.arr_env,
+              };
+            let e_is = compile_to_instrs(e, si, env, &mut new_ctx);
             format!("
   {startloop}:
     {e_is}
@@ -464,10 +483,10 @@ add rsp, {offset}
   {endloop}:")
         }
         Expr::Block(es) => {
-            es.into_iter().map(|e| { compile_to_instrs(e, si, env, brake, l, fun_env, false) }).collect::<Vec<String>>().join("\n")
+            es.into_iter().map(|e| { compile_to_instrs(e, si, env, ctx) }).collect::<Vec<String>>().join("\n")
         }
         Expr::BinOp(Op2::Cond(cond) , e1, e2) => {
-            let skip_label = new_label(l, "skip");
+            let skip_label = new_label(ctx.l, "skip");
             let cond_instrs = match cond {
                 ConditionType::Equal => format!("jne {skip_label}"),
                 ConditionType::Less => format!("jge {skip_label}"),
@@ -476,8 +495,8 @@ add rsp, {offset}
                 ConditionType::GreaterEqual => format!("jl {skip_label}"),
 
             };
-            let e1_instrs = compile_to_instrs(e1, si, env, brake, l, fun_env, false);
-            let e2_instrs = compile_to_instrs(e2, si + 1, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(e1, si, env, ctx);
+            let e2_instrs = compile_to_instrs(e2, si+1, env, ctx);
             let offset = si * 8;
             format!("
   {e1_instrs}
@@ -496,11 +515,11 @@ add rsp, {offset}
   {skip_label}:")
         }
         Expr::If(cond, thn, els) => {
-            let end_label = new_label(l, "ifend");
-            let else_label = new_label(l, "ifelse");
-            let cond_instrs = compile_to_instrs(cond, si, env, brake, l, fun_env, false);
-            let thn_instrs = compile_to_instrs(thn, si, env, brake, l, fun_env, false);
-            let els_instrs = compile_to_instrs(els, si, env, brake, l, fun_env, false);
+            let end_label = new_label(ctx.l, "ifend");
+            let else_label = new_label(ctx.l, "ifelse");
+            let cond_instrs = compile_to_instrs(cond, si, env, ctx);
+            let thn_instrs = compile_to_instrs(thn, si, env, ctx);
+            let els_instrs = compile_to_instrs(els, si, env, ctx);
             format!("
   {cond_instrs}
   cmp rax, 1
@@ -514,14 +533,14 @@ add rsp, {offset}
         Expr::Call(name, args) => {
           let mut instrs = String::new();
           let arg_len = args.len() as i32;
-          if arg_len != *fun_env.get(name).expect(&format!("Invalid function not found {name}")) {
-              panic!("Invalid Wrong number of arguments expected {} got {}", fun_env.get(name).unwrap(), arg_len);
+          if arg_len != *ctx.fun_env.get(name).expect(&format!("Invalid function not found {name}")) {
+              panic!("Invalid Wrong number of arguments expected {} got {}", ctx.fun_env.get(name).unwrap(), arg_len);
           }
           let offset = (arg_len+1) * 8;
           let target_offset = si * 8 + offset;
           for (i,arg) in args.iter().enumerate() {
               let stack_offset = (si + i as i32) * 8;
-              let arg_is = compile_to_instrs(arg, si + i as i32, env, brake, l, fun_env, false);
+              let arg_is = compile_to_instrs(arg, si + i as i32, env, ctx);
               instrs = instrs + "\n" + &arg_is + "\n" + &format!("mov [rsp+{stack_offset}], rax");
           }
           instrs = instrs + &format!("
@@ -548,8 +567,8 @@ add rsp, {offset}
       },
         Expr::Index(e1, e2) => {
             //TODO
-            let e1_instrs = compile_to_instrs(e1, si + 1, env, brake, l, fun_env, false);
-            let e2_instrs = compile_to_instrs(e2, si, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(e1, si + 1, env, ctx);
+            let e2_instrs = compile_to_instrs(e2, si, env, ctx);
             let offset = si * 8;
             format!("
     {e2_instrs}
@@ -567,7 +586,7 @@ add rsp, {offset}
             let arr_len = es.len() as i32;
 
             for (i,e) in es.iter().enumerate() {
-                let e_is = compile_to_instrs(e, si + i as i32, env, brake, l, fun_env, false);
+                let e_is = compile_to_instrs(e, si + i as i32, env, ctx);
                 let offset = i * 8;
                 instrs = instrs + "\n" + &e_is + "\n" + &format!("mov [r15+{offset}], rax");
             }
@@ -596,7 +615,14 @@ fn compile_program(p: &Program, fun_env: &mut HashMap<String, i32>) -> (String, 
   for def in &p.defs[..] {
     defs.push_str(&compile_definition(&def, &mut labels, fun_env));
   }
-  let main = compile_to_instrs(&p.main, 0, &HashMap::new(), &String::from(""), &mut labels, fun_env, false);
+  let mut ctx = CompilationContext {
+    brake: &String::from(""),
+    l: &mut labels,
+    fun_env: fun_env,
+    is_def: false,
+    arr_env: &mut HashMap::new(),
+  };
+  let main = compile_to_instrs(&p.main, 0, &mut HashMap::new(), &mut ctx);
   let main_with_offset = format!("
   sub rsp, {offset}
   {main}
@@ -616,7 +642,14 @@ fn compile_definition(d: &Definition, labels: &mut i32, fun_env: &mut HashMap<St
           for (i,arg) in args.iter().enumerate() {
               body_env.insert(arg.to_string(), dep + (i as i32) + 1);
           }
-          let body_is = compile_to_instrs(body, 0, &body_env, &String::from(""), labels, fun_env, true);
+          let mut ctx = CompilationContext {
+            brake: &String::from(""),
+            l: labels,
+            fun_env: fun_env,
+            is_def: true,
+            arr_env: &mut HashMap::new(),
+            };
+          let body_is = compile_to_instrs(body, 0, &mut body_env, &mut ctx);
           format!(
               "{name}:
   sub rsp, {offset}
