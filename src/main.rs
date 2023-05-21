@@ -325,6 +325,19 @@ fn depth(e: &Expr) -> i32 {
   }
 }
 
+fn check_arr(e: &Expr, ctx: &mut CompilationContext) -> i32 {
+    let mut arr_len = 0;
+    match e {
+        Expr:: Id(s) => {
+            if !ctx.arr_env.contains_key(s) {
+                panic!("Invalid array not found {}", s);
+            }
+            arr_len = *ctx.arr_env.get(s).unwrap() * 2;
+        }
+        _ => panic!("Invalid array not found "),
+    }
+    arr_len
+}
 
 // fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &String, l: &mut i32, fun_env: &mut HashMap<String, i32>, is_def: bool) -> String  {
 fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, ctx: &mut CompilationContext) -> String {
@@ -442,7 +455,13 @@ add rsp, {offset}
                 }
                 else {
                     set.insert(name);
-                    
+                    match val {
+                        Expr::Tuple(es) => {
+                            let arr_len = es.len() as i32;
+                            ctx.arr_env.insert(name.to_string(), arr_len);
+                        }
+                        _ => {}
+                    }
                     let val_is = compile_to_instrs(val, si+count, &sub_env, ctx);
                     instrs = instrs + "\n" + &val_is;
                     // check if hashmap contains name, if so, panic "Duplicate binding" error:
@@ -567,13 +586,18 @@ add rsp, {offset}
       },
         Expr::Index(e1, e2) => {
             //TODO
-            let e1_instrs = compile_to_instrs(e1, si + 1, env, ctx);
-            let e2_instrs = compile_to_instrs(e2, si, env, ctx);
+            let arr_len = check_arr(e1, ctx);
+            let e1_instrs = compile_to_instrs(e1, si, env, ctx);
+            let e2_instrs = compile_to_instrs(e2, si+1, env, ctx);
             let offset = si * 8;
             format!("
-    {e2_instrs}
-    mov [rsp + {offset}], rax
     {e1_instrs}
+    mov [rsp + {offset}], rax
+    mov rbx, {arr_len}
+    cmp rax, rbx
+    mov rdx, 3
+    jge throw_error
+    {e2_instrs}
     mov rbx, [rsp+{offset}]
     imul rbx, 4
     sub rbx, 1
@@ -584,7 +608,6 @@ add rsp, {offset}
             //TODO
             let mut instrs = String::new();
             let arr_len = es.len() as i32;
-
             for (i,e) in es.iter().enumerate() {
                 let e_is = compile_to_instrs(e, si + i as i32, env, ctx);
                 let offset = i * 8;
