@@ -29,7 +29,7 @@ fn snek_str(val: i64, seen : &mut Vec<i64>) -> String {
     else if val & 1 == 1 {
         if seen.contains(&val) { return "...".to_string() }
         seen.push(val);
-        let addr = val - 1 as *const i64;
+        let addr = (val - 1) as *const i64;
         let fst = unsafe { *addr };
         let snd = unsafe { *addr.offset(1) };
         let result = format!("({}, {})", snek_str(fst, seen), snek_str(snd, seen));
