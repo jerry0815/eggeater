@@ -46,6 +46,8 @@ enum Expr {
     Set(String, Box<Expr>),
     Block(Vec<Expr>),
     Call(String, Vec<Expr>),
+    Index(Box<Expr>, Box<Expr>),
+    Tuple(Vec<Expr>),
 }
 
 fn parse_bind(s: &Sexp) -> (String, Expr) {
@@ -139,6 +141,24 @@ fn parse_expr(s: &Sexp) -> Expr {
               Box::new(parse_expr(thn)),
               Box::new(parse_expr(els)),
             ),
+            [Sexp::Atom(S(op)), e] if op == "tuple" => {
+                match e {
+                    Sexp::List(eles) => {
+                        if eles.len() == 0 {
+                            panic!("Invalid tuple");
+                        }
+                        let mut arr = Vec::new();
+                        for ele in eles {
+                            arr.push(parse_expr(ele));
+                        }
+                        Expr::Tuple(arr)
+                    }
+                    _ => panic!("Invalid tuple"),
+                }
+            },
+            [Sexp::Atom(S(op)), e1, e2] if op == "index" => {
+                Expr::Index(Box::new(parse_expr(e1)), Box::new(parse_expr(e2)))
+            },
             _ => {
                 let funname = match &vec[0] {
                     Sexp::Atom(S(name)) => name,
@@ -270,7 +290,9 @@ fn depth(e: &Expr) -> i32 {
           max_depth = max_depth.max(depth(arg) + i as i32);
         }
         max_depth
-      }
+      },
+      Expr::Index(expr1, expr2) => depth(expr1).max(depth(expr2)),
+      Expr::Tuple(exprs) => exprs.iter().map(|expr| depth(expr)).max().unwrap_or(0),
   }
 }
 
@@ -504,8 +526,39 @@ add rsp, {offset}
   add rsp, {offset}
           ");
           instrs
-      }
-        
+      },
+        Expr::Index(e1, e2) => {
+            //TODO
+            let e1_instrs = compile_to_instrs(e1, si, env, brake, l, fun_env, false);
+            let e2_instrs = compile_to_instrs(e2, si + 1, env, brake, l, fun_env, false);
+            let offset = si * 8;
+            format!("
+    {e2_instrs}
+    mov [rsp + {offset}], rax
+    {e1_instrs}
+    mov rbx, [rsp+{offset}]
+    sub rax, 1
+    mul rbx, 8
+    add rax, rbx
+            ")
+        },
+        Expr::Tuple(es) => {
+            //TODO
+            let mut instrs = String::new();
+            let arr_len = es.len() as i32;
+
+            for (i,e) in es.iter().enumerate() {
+                let e_is = compile_to_instrs(e, si + i as i32, env, brake, l, fun_env, false);
+                let offset = i * 8;
+                instrs = instrs + "\n" + &e_is + "\n" + &format!("mov [r15+{offset}], rax");
+            }
+            instrs = instrs + &format!("
+            mov rax, r15
+            add rax, 1
+            add r15, {}
+            ", arr_len*8);
+            instrs
+        },
     }
     
 }
@@ -589,6 +642,7 @@ throw_error:
   ret
 {}
 our_code_starts_here:
+  mov r15, rsi
   {}
   ret
 ",
