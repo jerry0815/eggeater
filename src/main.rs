@@ -556,10 +556,9 @@ add rsp, {offset}
     mov [rsp + {offset}], rax
     {e1_instrs}
     mov rbx, [rsp+{offset}]
-    sub rax, 1
     imul rbx, 8
-    add rax, rbx
-    mov rax, [rax]
+    sub rbx, 1
+    mov rax, [rax+rbx]
             ")
         },
         Expr::Tuple(es) => {
