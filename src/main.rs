@@ -548,8 +548,8 @@ add rsp, {offset}
       },
         Expr::Index(e1, e2) => {
             //TODO
-            let e1_instrs = compile_to_instrs(e1, si, env, brake, l, fun_env, false);
-            let e2_instrs = compile_to_instrs(e2, si + 1, env, brake, l, fun_env, false);
+            let e1_instrs = compile_to_instrs(e1, si + 1, env, brake, l, fun_env, false);
+            let e2_instrs = compile_to_instrs(e2, si, env, brake, l, fun_env, false);
             let offset = si * 8;
             format!("
     {e2_instrs}
