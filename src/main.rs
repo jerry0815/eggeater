@@ -558,8 +558,8 @@ add rsp, {offset}
     mov rbx, [rsp+{offset}]
     imul rbx, 8
     sub rbx, 1
-    add rbx, rax
-    mov rax, [rbx]
+    add rax, rbx
+    mov rax, [rax]
             ")
         },
         Expr::Tuple(es) => {
@@ -570,7 +570,7 @@ add rsp, {offset}
             for (i,e) in es.iter().enumerate() {
                 let e_is = compile_to_instrs(e, si + i as i32, env, brake, l, fun_env, false);
                 let offset = i * 8;
-                instrs = instrs + "\n" + &e_is + "\n" + &format!("add rax, 1\n mov [r15+{offset}], rax");
+                instrs = instrs + "\n" + &e_is + "\n" + &format!("mov [r15+{offset}], rax");
             }
             instrs = instrs + &format!("
             mov rax, r15
