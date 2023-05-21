@@ -423,8 +423,8 @@ add rsp, {offset}
             }
             instrs + "\n" + &compile_to_instrs(body, si + count, &sub_env, brake, l, fun_env, false)
         }
-        Expr::False => format!("mov rax, {}", 1),
-        Expr::True => format!("mov rax, {}", 3),
+        Expr::False => format!("mov rax, {}", 3),
+        Expr::True => format!("mov rax, {}", 7),
         Expr::Break(e) => {
             if brake == "" {
                 panic!("break");
