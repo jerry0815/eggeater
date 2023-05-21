@@ -160,18 +160,37 @@ fn parse_expr(s: &Sexp) -> Expr {
                 Expr::Index(Box::new(parse_expr(e1)), Box::new(parse_expr(e2)))
             },
             _ => {
-                let funname = match &vec[0] {
+                let op = match &vec[0] {
                     Sexp::Atom(S(name)) => name,
                     _ => panic!("Invalid expression"),
                 };
-                if keywords.contains(&&funname[..]) || funname == "input" {
-                    panic!("Invalid func call");
+                match op.as_str() {
+                    "tuple" => {
+                        if vec.len() == 1 {
+                            panic!("Invalid tuple");
+                        }
+                        let mut arr = Vec::new();
+                        for ele in &vec[1..] {
+                            arr.push(parse_expr(ele));
+                        }
+                        Expr::Tuple(arr)
+                    },
+                    "index" => {
+                        Expr::Index(Box::new(parse_expr(&vec[1])), Box::new(parse_expr(&vec[2])))
+                    },
+                    _ => {
+                        let funname = op;
+                        if keywords.contains(&&funname[..]) || funname == "input" {
+                            panic!("Invalid func call");
+                        }
+                        let mut args = Vec::new();
+                        for sub_expr in &vec[1..] {
+                            args.push(parse_expr(sub_expr));
+                        }
+                        Expr::Call(funname.to_string(), args)
+                    }
                 }
-                let mut args = Vec::new();
-                for sub_expr in &vec[1..] {
-                    args.push(parse_expr(sub_expr));
-                }
-                Expr::Call(funname.to_string(), args)
+               
             }
         },
         _ => panic!("Invalid expression"),
