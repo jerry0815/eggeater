@@ -21,5 +21,6 @@
                 (+ (index x 1) (index y 1))
             ) 
         )
+        (print (add x y))
     )
 )
