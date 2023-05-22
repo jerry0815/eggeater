@@ -588,17 +588,17 @@ add rsp, {offset}
         Expr::Index(e1, e2) => {
             //TODO
             let arr_len = check_arr(e1, ctx);
-            let e1_instrs = compile_to_instrs(e1, si, env, ctx);
-            let e2_instrs = compile_to_instrs(e2, si+1, env, ctx);
+            let e1_instrs = compile_to_instrs(e1, si+1, env, ctx);
+            let e2_instrs = compile_to_instrs(e2, si, env, ctx);
             let offset = si * 8;
             format!("
-    {e1_instrs}
+    {e2_instrs}
     mov [rsp + {offset}], rax
     mov rbx, {arr_len}
     cmp rax, rbx
     mov rdx, 3
     jge throw_error
-    {e2_instrs}
+    {e1_instrs}
     mov rbx, [rsp+{offset}]
     imul rbx, 4
     add rbx, 7
