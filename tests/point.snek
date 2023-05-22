@@ -6,6 +6,7 @@
     (block
         (print px)
         (print (+ (index px 0) 1))
+        (print (+ (index px 1) 2))
         (tuple 
             2
             (+ (index px 0) 1)
