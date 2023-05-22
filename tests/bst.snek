@@ -23,7 +23,7 @@
         (if (> i 10)
             (break root)
             (block
-                (set! root (insert root i))
+                (insert root i)
                 (set! i (+ i 1))
             )
         )
