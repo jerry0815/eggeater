@@ -14,6 +14,12 @@
     (block
         (print x)
         (print y)
-        (print (add x y))
+        (print
+            (tuple
+                2
+                (+ (index x 0) (index y 0))
+                (+ (index x 1) (index y 1))
+            ) 
+        )
     )
 )
