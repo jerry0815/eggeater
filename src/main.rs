@@ -321,7 +321,13 @@ fn depth(e: &Expr) -> i32 {
         max_depth
       },
       Expr::Index(expr1, expr2) => depth(expr2).max(depth(expr1) + 1),
-      Expr::Tuple(exprs) => exprs.iter().map(|expr| depth(expr)).max().unwrap_or(0),
+      Expr::Tuple(exprs) => {
+        let mut max_depth = exprs.len() as i32;
+        for (i, expr) in exprs.iter().enumerate() {
+            max_depth = max_depth.max(depth(expr) + i as i32);
+          }
+        max_depth
+      }
   }
 }
 
