@@ -189,6 +189,21 @@ success_tests! {
         name: addfun,
         file: "addfun.snek",
         expected: "5",
+    },
+    {
+        name: tuple,
+        file: "tuple.snek",
+        expected: "20\n50"
+    },
+    {
+        name: point,
+        file: "point.snek",
+        expected: "[3, 4]\n[1, 2]\n[4, 6]\n[4, 6]",
+    },
+    {
+        name: bst,
+        file: "bst.snek",
+        expected: "[5, [1, false, [2, false, [3, false, [4, false, false]]]], [6, false, [7, false, [8, false, [9, false, [10, false, false]]]]]]"
     }
     
 }
@@ -209,6 +224,16 @@ runtime_error_tests! {
         name: overflow_3,
         file: "overflow_3.snek",
         expected: "overflow",
+    },
+    {
+        name: tuple_error_tag,
+        file: "tuple_error_tag.snek",
+        expected: "index to not array",
+    },
+    {
+        name: tuple_error_bounds,
+        file: "tuple_error_bounds.snek",
+        expected: "index out of range",
     },
 }
 
@@ -246,6 +271,11 @@ static_error_tests! {
     {
         name: error_define,
         file: "error_define.snek",
+        expected: "",
+    },
+    {
+        name: tuple_error3,
+        file: "tuple_error3.snek",
         expected: "",
     }
 
