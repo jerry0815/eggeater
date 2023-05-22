@@ -203,7 +203,7 @@ success_tests! {
     {
         name: bst,
         file: "bst.snek",
-        expected: "[5, [1, false, [2, false, [3, false, [4, false, false]]]], [6, false, [7, false, [8, false, [9, false, [10, false, false]]]]]]"
+        expected: "[5, [1, nil, [2, nil, [3, nil, [4, nil, nil]]]], [6, nil, [7, nil, [8, nil, [9, nil, [10, nil, nil]]]]]]"
     }
     
 }
@@ -276,7 +276,7 @@ static_error_tests! {
     {
         name: tuple_error3,
         file: "tuple_error3.snek",
-        expected: "",
+        expected: "Invalid",
     }
 
 }
