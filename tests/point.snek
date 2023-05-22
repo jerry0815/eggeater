@@ -5,7 +5,7 @@
 (fun (add px py)
     (block
         (print px)
-        (print py)
+        (print (index px 0))
         (tuple 
             2
             (+ (index px 0) 1)
