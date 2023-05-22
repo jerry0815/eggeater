@@ -6,9 +6,9 @@
     (block
         (if (= bst false)
             (node ele false false)
-            (if (> ele (index 0 bst))
+            (if (> ele (index bst 0))
                 (node ele (index bst 1) (insert (index bst 2) ele))
-                (if (< ele (index 0 bst))
+                (if (< ele (index bst 0))
                     (node ele (insert (index bst 1) ele) (index bst 2))
                     bst
                 )
