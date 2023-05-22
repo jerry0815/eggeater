@@ -3,10 +3,14 @@
 )
 
 (fun (add px py)
-    (tuple 
-        2
-        (+ (index px 0) 1)
-        (+ (index px 1) 2)
+    (block
+        (print px)
+        (print py)
+        (tuple 
+            2
+            (+ (index px 0) 1)
+            (+ (index px 1) 2)
+        )
     )
 )
 
