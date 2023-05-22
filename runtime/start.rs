@@ -37,9 +37,8 @@ fn snek_str(val: i64, seen : &mut Vec<i64>) -> String {
             Ok(n) => {
                 let mut result = String::from("[");
                 for i in 0..n {
-                    let addr = (val - 1 + i + 1) as *const i64;
-                    let fst = unsafe { *addr };
-                    result.push_str(&snek_str(fst, seen));
+                    let ele = unsafe { *addr.offset(i+1) };
+                    result.push_str(&snek_str(ele, seen));
                     if i < n - 1 { result.push_str(", ") }
                 }
                 result.push_str("]");
