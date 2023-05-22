@@ -320,7 +320,7 @@ fn depth(e: &Expr) -> i32 {
         }
         max_depth
       },
-      Expr::Index(expr1, expr2) => depth(expr1).max(depth(expr2)),
+      Expr::Index(expr1, expr2) => depth(expr2).max(depth(expr1) + 1),
       Expr::Tuple(exprs) => exprs.iter().map(|expr| depth(expr)).max().unwrap_or(0),
   }
 }
