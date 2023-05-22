@@ -5,8 +5,8 @@
 (fun (add px py)
     (tuple 
         2
-        (+ (index px 0) (index py 0))
-        (+ (index px 1) (index py 1))
+        (+ (index px 0) 1)
+        (+ (index px 1) 2)
     )
 )
 
