@@ -10,10 +10,10 @@
     )
 )
 
-(let ((x (point 3 4)) (y (point 1 2)) (z (add x y)))
+(let ((x (point 3 4)) (y (point 1 2)))
     (block
         (print x)
         (print y)
-        (print z)
+        (print (add x y))
     )
 )
