@@ -36,6 +36,7 @@ enum Expr {
     Number(i64),
     True,
     False,
+    Nil,
     Id(String),
     Let(Vec<(String, Expr)>, Box<Expr>),
     UnOp(Op1, Box<Expr>),
@@ -61,7 +62,7 @@ struct CompilationContext<'a> {
 
 
 fn parse_bind(s: &Sexp) -> (String, Expr) {
-    let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool", "print", "input", "fun"];
+    let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool", "print", "input", "fun", "nil", "tuple", "index"];
     match s {
         Sexp::List(vec) => match &vec[..] {
             [Sexp::Atom(S(name)), _e] if keywords.contains(&&name[..]) => panic!("keyword"),
@@ -74,11 +75,12 @@ fn parse_bind(s: &Sexp) -> (String, Expr) {
 
 
 fn parse_expr(s: &Sexp) -> Expr {
-    let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool","print", "fun"];
+    let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool","print", "fun", "nil", "tuple", "index"];
     match s {
         Sexp::Atom(I(n)) => Expr::Number(i64::try_from(*n).unwrap()),
         Sexp::Atom(S(name)) if name == "true" => Expr::True,
         Sexp::Atom(S(name)) if name == "false" => Expr::False,
+        Sexp::Atom(S(name)) if name == "nil" => Expr::Nil,
         Sexp::Atom(S(name)) if keywords.contains(&&name[..]) => panic!("keyword {}", name.to_string()),
         Sexp::Atom(S(name)) => Expr::Id(String::try_from(name).unwrap()),
         Sexp::List(vec) if vec.len() == 0 => panic!("Invalid empty list"),
@@ -219,7 +221,7 @@ fn is_def(s: &Sexp) -> bool {
 }
 
 fn parse_definition(s: &Sexp, fun_env: &mut HashMap<String, i32>) -> Definition {
-  let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool", "print", "input", "fun"];
+  let keywords = vec!["let", "add1", "sub1", "if", "loop", "break", "block", "set!", "true", "false","isnum", "isbool", "print", "input", "fun", "nil", "tuple", "index"];
   match s {
       Sexp::List(def_vec) => match &def_vec[..] {
           [Sexp::Atom(S(keyword)), Sexp::List(name_vec), body] if keyword == "fun" => {
@@ -295,6 +297,7 @@ fn depth(e: &Expr) -> i32 {
       Expr::Number(_) => 0,
       Expr::True => 0,
       Expr::False => 0,
+      Expr::Nil => 0,
       Expr::UnOp(_,expr) => depth(expr),
       Expr::BinOp(Op2::Arith(_),expr1, expr2) => depth(expr2).max(depth(expr1) + 1),
       Expr::Let(binds, expr) => {
@@ -482,6 +485,7 @@ add rsp, {offset}
         }
         Expr::False => format!("mov rax, {}", 3),
         Expr::True => format!("mov rax, {}", 7),
+        Expr::Nil => format!("mov rax, {}", 1),
         Expr::Break(e) => {
             if ctx.brake == "" {
                 panic!("break");
@@ -602,6 +606,9 @@ add rsp, {offset}
     mov [rsp + {offset}], rax
     {e1_instrs}
     mov rbx, rax
+    cmp rbx, 7
+    mov rdx, 4
+    jle throw_error
     and rbx, 1
     cmp rbx, 1
     mov rdx, 4

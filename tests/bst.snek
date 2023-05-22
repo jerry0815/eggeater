@@ -4,8 +4,8 @@
 
 (fun (insert bst ele)
     (block
-        (if (= bst false)
-            (node ele false false)
+        (if (= bst nil)
+            (node ele nil nil)
             (if (> ele (index bst 0))
                 (node (index bst 0) (index bst 1) (insert (index bst 2) ele))
                 (if (< ele (index bst 0))
@@ -18,7 +18,7 @@
 )
 
 
-(let ((root (node 5 false false)) (i 1))
+(let ((root (node 5 nil nil)) (i 1))
     (loop
         (if (> i 10)
             (break root)
