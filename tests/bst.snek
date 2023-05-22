@@ -7,9 +7,9 @@
         (if (= bst false)
             (node ele false false)
             (if (> ele (index bst 0))
-                (node ele (index bst 1) (insert (index bst 2) ele))
+                (node (index bst 0) (index bst 1) (insert (index bst 2) ele))
                 (if (< ele (index bst 0))
-                    (node ele (insert (index bst 1) ele) (index bst 2))
+                    (node (index bst 0) (insert (index bst 1) ele) (index bst 2))
                     bst
                 )
             )
@@ -23,7 +23,7 @@
         (if (> i 10)
             (break root)
             (block
-                (insert root i)
+                (set! root (insert root i))
                 (set! i (+ i 1))
             )
         )
