@@ -332,7 +332,7 @@ fn check_arr(e: &Expr, ctx: &mut CompilationContext) -> i32 {
                 panic!("Invalid array not found {}", s);
             }
             else {
-                let arr_len = (ctx.arr_env.get(s).unwrap()+1) * 2;
+                let arr_len = (ctx.arr_env.get(s).unwrap()-1) * 2;
                 arr_len
             }
         }
