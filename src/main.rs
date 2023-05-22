@@ -603,7 +603,7 @@ add rsp, {offset}
     mov rbx, [rax-1]
     cmp rbx, [rsp + {offset}]
     mov rdx, 3
-    jge throw_error
+    jle throw_error
     mov rbx, [rsp+{offset}]
     imul rbx, 4
     add rbx, 7

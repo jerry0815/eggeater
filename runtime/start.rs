@@ -16,6 +16,7 @@ pub extern "C" fn snek_error(errcode: i64) {
         1 => eprintln!("invalid argument"),
         2 => eprintln!("overflow"),
         3 => eprintln!("index out of range"),
+        4 => eprintln!("index to not array"),
         _ => eprintln!("Unknown error code: {}", errcode),
     }
     std::process::exit(1);
