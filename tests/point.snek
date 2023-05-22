@@ -3,36 +3,17 @@
 )
 
 (fun (add px py)
-    (block
-        (print px)
-        (print (+ (index px 0) 1))
-        (print (+ (index px 1) 2))
-        (let 
-            ((z
-                (tuple 
-                    2
-                    (+ (index px 0) 1)
-                    (+ (index px 1) 2)
-                )
-            )
-            )
-            1
-        )
-        
+    (tuple 
+        2
+        (+ (index px 0) (index py 0))
+        (+ (index px 1) (index py 1))
     )
 )
 
-(let ((x (point 3 4)) (y (point 1 2)))
+(let ((x (point 3 4)) (y (point 1 2)) (z (add x y)))
     (block
         (print x)
         (print y)
-        (print
-            (tuple
-                2
-                (+ (index x 0) (index y 0))
-                (+ (index x 1) (index y 1))
-            ) 
-        )
-        (print (add x y))
+        (print z)
     )
 )
