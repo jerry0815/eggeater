@@ -334,20 +334,7 @@ fn depth(e: &Expr) -> i32 {
   }
 }
 
-// fn check_arr(e: &Expr, ctx: &mut CompilationContext) -> i32 {
-//     match e {
-//         Expr:: Id(s) => {
-//             if !ctx.arr_env.contains_key(s) {
-//                 panic!("Invalid array not found {}", s);
-//             }
-//             else {
-//                 let arr_len = (ctx.arr_env.get(s).unwrap()-1) * 2;
-//                 arr_len
-//             }
-//         }
-//         _ => panic!("Invalid array not found "),
-//     }
-// }
+
 
 // fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, brake: &String, l: &mut i32, fun_env: &mut HashMap<String, i32>, is_def: bool) -> String  {
 fn compile_to_instrs(e: &Expr, si: i32, env: &HashMap<String, i32>, ctx: &mut CompilationContext) -> String {
@@ -596,8 +583,6 @@ add rsp, {offset}
           instrs
       },
         Expr::Index(e1, e2) => {
-            //TODO
-            // let arr_len = check_arr(e1, ctx);
             let e1_instrs = compile_to_instrs(e1, si+1, env, ctx);
             let e2_instrs = compile_to_instrs(e2, si, env, ctx);
             let offset = si * 8;
@@ -624,7 +609,6 @@ add rsp, {offset}
             ")
         },
         Expr::Tuple(es) => {
-            //TODO
             let mut instrs = String::new();
             let arr_len = es.len() as i32;
             for (i,e) in es.iter().enumerate() {
