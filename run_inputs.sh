@@ -9,4 +9,4 @@ for filename in ./inputs/*.snek; do
     ./inputs/$file.run
 done
 
-rm -f tests/*.a tests/*.s tests/*.run tests/*.o
+rm -f inputs/*.a inputs/*.s inputs/*.run inputs/*.o
