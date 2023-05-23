@@ -1,6 +1,6 @@
 
 for file in ./inputs/*.snek; do
-    file=$(basename $file.snek)
+    file= ${file%%.*}
     cargo run -- $file.snek inputs/$file.s
     nasm -f elf64 ./inputs/$file.s -o ./inputs/$file.o
     ar rcs ./inputs/lib$file.a ./inputs/$file.o
