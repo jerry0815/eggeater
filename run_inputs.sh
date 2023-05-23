@@ -1,5 +1,6 @@
 
 for file in ./inputs/*.snek; do
+    file=$(basename $file.snek)
     cargo run -- $file.snek inputs/$file.s
     nasm -f elf64 ./inputs/$file.s -o ./inputs/$file.o
     ar rcs ./inputs/lib$file.a ./inputs/$file.o
@@ -7,3 +8,5 @@ for file in ./inputs/*.snek; do
     cat ./inputs/$file.s
     ./inputs/$file.run
 done
+
+rm -f tests/*.a tests/*.s tests/*.run tests/*.o
