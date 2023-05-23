@@ -5,7 +5,7 @@ for filename in ./inputs/*.snek; do
     nasm -f elf64 ./inputs/$file.s -o ./inputs/$file.o
     ar rcs ./inputs/lib$file.a ./inputs/$file.o
     rustc -L ./inputs/ -lour_code:$file ./runtime/start.rs -o ./inputs/$file.run
-    cat ./inputs/$file.s
+    cat ./inputs/$file.snek
     ./inputs/$file.run
 done
 
