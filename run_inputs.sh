@@ -1,12 +1,12 @@
 
-for filename in ./inputs/*.snek; do
+for filename in ./input/*.snek; do
     file=$(basename $filename .snek)
-    cargo run -- ./inputs/$file.snek ./inputs/$file.s
-    nasm -f elf64 ./inputs/$file.s -o ./inputs/$file.o
-    ar rcs ./inputs/lib$file.a ./inputs/$file.o
-    rustc -L ./inputs/ -lour_code:$file ./runtime/start.rs -o ./inputs/$file.run
-    cat ./inputs/$file.snek
-    ./inputs/$file.run
+    cargo run -- ./input/$file.snek ./input/$file.s
+    nasm -f elf64 ./input/$file.s -o ./input/$file.o
+    ar rcs ./input/lib$file.a ./input/$file.o
+    rustc -L ./input/ -lour_code:$file ./runtime/start.rs -o ./input/$file.run
+    cat ./input/$file.snek
+    ./input/$file.run
 done
 
-rm -f inputs/*.a inputs/*.s inputs/*.run inputs/*.o
+rm -f input/*.a input/*.s input/*.run input/*.o
