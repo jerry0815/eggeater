@@ -3,15 +3,13 @@
 )
 
 (fun (insert bst ele)
-    (block
-        (if (= bst nil)
-            (node ele nil nil)
-            (if (> ele (index bst 0))
-                (node (index bst 0) (index bst 1) (insert (index bst 2) ele))
-                (if (< ele (index bst 0))
-                    (node (index bst 0) (insert (index bst 1) ele) (index bst 2))
-                    bst
-                )
+    (if (= bst nil)
+        (node ele nil nil)
+        (if (> ele (index bst 0))
+            (node (index bst 0) (index bst 1) (insert (index bst 2) ele))
+            (if (< ele (index bst 0))
+                (node (index bst 0) (insert (index bst 1) ele) (index bst 2))
+                bst
             )
         )
     )
