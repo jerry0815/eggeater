@@ -153,21 +153,6 @@ fn parse_expr(s: &Sexp) -> Expr {
               Box::new(parse_expr(thn)),
               Box::new(parse_expr(els)),
             ),
-            [Sexp::Atom(S(op)), e] if op == "tuple" => {
-                match e {
-                    Sexp::List(eles) => {
-                        if eles.len() == 0 {
-                            panic!("Invalid tuple");
-                        }
-                        let mut arr = Vec::new();
-                        for ele in eles {
-                            arr.push(parse_expr(ele));
-                        }
-                        Expr::Tuple(arr)
-                    }
-                    _ => panic!("Invalid tuple"),
-                }
-            },
             [Sexp::Atom(S(op)), e1, e2] if op == "index" => {
                 Expr::Index(Box::new(parse_expr(e1)), Box::new(parse_expr(e2)))
             },
@@ -186,9 +171,6 @@ fn parse_expr(s: &Sexp) -> Expr {
                             arr.push(parse_expr(ele));
                         }
                         Expr::Tuple(arr)
-                    },
-                    "index" => {
-                        Expr::Index(Box::new(parse_expr(&vec[1])), Box::new(parse_expr(&vec[2])))
                     },
                     _ => {
                         let funname = op;
@@ -560,13 +542,9 @@ add rsp, {offset}
               let arg_is = compile_to_instrs(arg, si + i as i32, env, ctx);
               instrs = instrs + "\n" + &arg_is + "\n" + &format!("mov [rsp+{stack_offset}], rax");
           }
-          instrs = instrs + &format!("
-  sub rsp, {offset}
-  mov rbx, [rsp+{target_offset}]
-  mov [rsp], rbx
-          ");
-          for i in 1..arg_len {
-              let origin = (si + arg_len + i + 1) * 8;
+          instrs = instrs + &format!("\nsub rsp, {offset}\n");
+          for i in 0..arg_len {
+              let origin = (si + i as i32) * 8 + offset;
               let dest = i * 8;
               instrs = instrs + &format!("
   mov rbx, [rsp+{origin}]
